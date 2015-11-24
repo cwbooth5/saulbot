@@ -69,6 +69,6 @@ if __name__ == "__main__":
         sys.exit()
 
     reactor.connectTCP('irc.catch22.org', 6667, SaulBotFactory('#' + chan,
-                       'saulbot', 2, chattiness=0.15))
+                       'saulbot')
 
     reactor.run()

@@ -7,21 +7,6 @@ from twisted.internet import reactor
 
 from pymarkovchain import MarkovChain
 
-CORPUS = 'corpus.txt'
-
-
-def markov():
-    """A simple markov function"""
-    mc = MarkovChain("./tempchain")
-
-    with open(CORPUS, 'r') as f:
-        data = f.read()
-
-    mc.generateDatabase(data)
-
-    return mc.generateString()
-
-
 class SaulBot(irc.IRCClient):
     def _get_nickname(self):
         return self.factory.nickname
@@ -35,11 +20,13 @@ class SaulBot(irc.IRCClient):
     def joined(self, channel):
         print "Joined %s." % (channel,)
 
-    def privmsg(self, user, channel, msg):
-        if not user:
+    def privmsg(self, user, target, msg):
+        if not user or self.nickname not in msg:
             return
-        if self.nickname in msg:
-            self.msg(self.factory.channel, markov())
+        sentence = self.factory.markov.generateString()
+        reactor.callLater(
+            len(sentence) / 500.0,
+            self.msg, target, sentence)
 
 
 class SaulBotFactory(protocol.ClientFactory):
@@ -48,6 +35,10 @@ class SaulBotFactory(protocol.ClientFactory):
     def __init__(self, channel='', nickname=''):
         self.channel = channel
         self.nickname = nickname
+        self.markov = MarkovChain("./tempchain")
+
+        with open('corpus.txt', 'r') as f:
+            self.markov.generateDatabase(f.read())
 
     def clientConnectionLost(self, connector, reason):
         print "Lost connection (%s), reconnecting." % (reason,)
@@ -65,7 +56,7 @@ if __name__ == "__main__":
 
     # Allow for testing of the generated quips.
     if chan == 'test':
-        print markov()
+        print SaulBotFactory().markov.generateString()
         sys.exit()
 
     reactor.connectTCP('irc.catch22.org', 6667, SaulBotFactory('#' + chan, 'saulbot'))

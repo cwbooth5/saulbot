@@ -68,7 +68,6 @@ if __name__ == "__main__":
         print markov()
         sys.exit()
 
-    reactor.connectTCP('irc.catch22.org', 6667, SaulBotFactory('#' + chan,
-                       'saulbot')
+    reactor.connectTCP('irc.catch22.org', 6667, SaulBotFactory('#' + chan, 'saulbot'))
 
     reactor.run()
